@@ -28,12 +28,18 @@ async function run() {
     await client.connect();
 
     const menuCollection= client.db("bristoDB").collection("menu");
+    const cartsCollection= client.db("bristoDB").collection("carts");
 
     app.get("/menu", async (req,res)=>{
         const result = await menuCollection.find().toArray();
         res.send(result)
     })
 
+    app.post("/carts", async (req,res)=>{
+      const cartItem = req.body;
+      const result = await cartsCollection.insertOne(cartItem);
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
