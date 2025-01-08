@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express');
 const app = express();
+const jwt = require('jsonwebtoken')
 const cors = require('cors');
 const port = process.env.PORT || 5000;
 
@@ -31,9 +32,33 @@ async function run() {
     const menuCollection= client.db("bristoDB").collection("menu");
     const reviewCollection= client.db("bristoDB").collection("reviews");
     const cartsCollection= client.db("bristoDB").collection("carts");
+    // jwt related api 
+    app.post('/jwt', async (req, res)=>{
+      const user= req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
+      res.send({token})
+    })
+
+    //middle were 
+    const verifyToken = (req,res,next) =>{
+
+      if(!req.headers.authorization){
+        return res.status(401).send({message: 'forbidden Access'})
+      }
+      const token = req.headers.authorization.split(' ')[1]
+      console.log("mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",token)
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
+        if(err){
+          return res.status(401).send({message: 'forbidden Access'})
+        }
+        req.decoded = decoded;
+        next()
+      })
+    }
 
     // const user 
-    app.get("/users", async (req, res)=>{
+    app.get("/users", verifyToken, async (req, res)=>{
+      
       const result = await userCollection.find().toArray();
       res.send(result)
     })
